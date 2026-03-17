@@ -45,14 +45,28 @@ wss.on('connection', (ws) => {
                     ws.roomId = msg.room;
                     room.peersMap.set(msg.id, ws);
                     
-                    // Notificar HOST sobre novo peer
-                    console.log(`[CLIENT] Notificando HOST sobre novo peer ${msg.id}`);
+                    // 🔥 NOVO: Notificar CLIENT que foi aceito e conectado
+                    console.log(`[CLIENT] Enviando confirmação ao CLIENT ${msg.id}`);
+                    ws.send(JSON.stringify({ 
+                        type: "join_accepted",
+                        hostId: room.hostWs.peerId,
+                        room: msg.room
+                    }));
+                    
+                    // Notificar HOST sobre novo peer (HOST deve criar offer)
+                    console.log(`[HOST] Notificando HOST ${room.hostWs.peerId} sobre novo peer ${msg.id}`);
                     room.hostWs.send(JSON.stringify({ 
                         type: "peer_joined", 
-                        id: msg.id 
+                        id: msg.id,
+                        room: msg.room
                     }));
                 } else {
                     console.log(`[ERROR] Sala ${msg.room} não encontrada ou sem host!`);
+                    // Notificar CLIENT do erro
+                    ws.send(JSON.stringify({
+                        type: "join_error",
+                        error: "Room not found or no host"
+                    }));
                 }
             }
             // ===== LÓGICA 3: SIGNALING (OFFER/ANSWER/CANDIDATE) =====
