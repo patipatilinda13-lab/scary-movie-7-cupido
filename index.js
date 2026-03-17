@@ -98,26 +98,45 @@ wss.on('connection', (ws) => {
     });
 
     ws.on('close', () => {
-        console.log(`[CUPIDO] Conexão fechada. Total agora: ${wss.clients.size}`);
+        console.log(`[CUPIDO] ❌ Conexão fechada. Total agora: ${wss.clients.size}`);
         
         // Remover peer do mapa global
         if (ws.peerId) {
             peers.delete(ws.peerId);
-            console.log(`[CUPIDO] Peer ${ws.peerId} removido`);
+            console.log(`[CUPIDO] ✓ Peer ${ws.peerId} removido do mapa global`);
         }
         
         // Se era host, remover a sala também
         if (ws.isHost && ws.roomId) {
+            const room = rooms.get(ws.roomId);
+            const clientsEmSala = room ? room.peersMap.size : 0;
+            console.log(`[CUPIDO] 🔥 HOST ${ws.peerId} desconectou. Clientes em sala: ${clientsEmSala}`);
+            
+            // Remover sala imediatamente
             rooms.delete(ws.roomId);
-            console.log(`[CUPIDO] Sala ${ws.roomId} destruída (host saiu)`);
+            console.log(`[CUPIDO] ✓ Sala ${ws.roomId} foi destruída (host saiu)`);
+            
+            // Notificar todos os clientes que sala foi encerrada
+            if (room) {
+                room.peersMap.forEach((clientWs, clientId) => {
+                    if (clientWs.readyState === 1) { // WebSocket.OPEN
+                        clientWs.send(JSON.stringify({
+                            type: "host_disconnected",
+                            room: ws.roomId
+                        }));
+                        console.log(`[CUPIDO] ✓ Cliente ${clientId} notificado: host desconectou`);
+                    }
+                });
+            }
         } else if (ws.roomId) {
             // Se era cliente, notificar host que saiu
             const room = rooms.get(ws.roomId);
-            if (room && room.hostWs) {
+            if (room && room.hostWs && room.hostWs.readyState === 1) { // WebSocket.OPEN
                 room.hostWs.send(JSON.stringify({
                     type: "peer_left",
                     id: ws.peerId
                 }));
+                console.log(`[CUPIDO] ✓ HOST notificado: cliente ${ws.peerId} saiu`);
             }
             room?.peersMap.delete(ws.peerId);
         }
