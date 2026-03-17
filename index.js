@@ -57,15 +57,23 @@ wss.on('connection', (ws) => {
             }
             // ===== LÓGICA 3: SIGNALING (OFFER/ANSWER/CANDIDATE) =====
             else if (msg.type === "offer" || msg.type === "answer" || msg.type === "candidate") {
-                console.log(`[SIGNALING] ${msg.type.toUpperCase()} de peer ${msg.id} para peer ${msg.targetId}`);
+                // Usamos msg.id porque é o que o seu Godot envia como destino
+                const targetId = msg.id; 
+                console.log(`[SIGNALING] ${msg.type.toUpperCase()} para peer ${targetId}`);
                 
-                // Encontrar o peer de destino
-                const targetWs = peers.get(msg.targetId);
+                const targetWs = peers.get(targetId);
                 if (targetWs) {
-                    console.log(`[SIGNALING] Enviando ${msg.type} para peer ${msg.targetId}`);
-                    targetWs.send(JSON.stringify(msg));
+                    // O SEGREDO: Antes de enviar, trocamos o ID pelo de quem ENVIOU (ws.peerId)
+                    // Assim, o destinatário sabe quem é o remetente para poder responder.
+                    const msgParaEnviar = JSON.stringify({
+                        ...msg,
+                        id: ws.peerId // Sobrescrevemos com o ID de quem está a enviar agora
+                    });
+                    
+                    console.log(`[SIGNALING] Enviando ${msg.type} de peer ${ws.peerId} para peer ${targetId}`);
+                    targetWs.send(msgParaEnviar);
                 } else {
-                    console.log(`[ERROR] Peer destino ${msg.targetId} não encontrado!`);
+                    console.log(`[ERROR] Peer destino ${targetId} não encontrado!`);
                 }
             } else {
                 console.log(`[CUPIDO] Mensagem desconhecida: ${msg.type}`);
