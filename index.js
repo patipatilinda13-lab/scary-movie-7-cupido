@@ -1,4 +1,5 @@
 // Cupido: Signaling Server para WebRTC P2P - ScaryMovie7
+// ✅ VERSÃO COM: join_accepted + host_disconnected + cleanup melhorado
 const { WebSocketServer } = require('ws');
 
 const wss = new WebSocketServer({ port: process.env.PORT || 3000 });
