@@ -102,10 +102,12 @@ wss.on('connection', (ws) => {
     ws.on('close', () => {
         console.log(`[CUPIDO] ❌ Conexão fechada. Total agora: ${wss.clients.size}`);
         
-        // Remover peer do mapa global
-        if (ws.peerId) {
+        // O SEGREDO: Só apaga o ID da lista se quem estiver morrendo for o dono ATUAL da conexão!
+        if (ws.peerId && peers.get(ws.peerId) === ws) {
             peers.delete(ws.peerId);
-            console.log(`[CUPIDO] ✓ Peer ${ws.peerId} removido do mapa global`);
+            console.log(`[CUPIDO] ✓ Peer ${ws.peerId} removido do mapa global (era o dono)`);
+        } else if (ws.peerId) {
+            console.log(`[CUPIDO] ⚠️ Tentativa de apagar peer ${ws.peerId}, mas já foi substituído por outro (fantasma ignorado)`);
         }
         
         // Se era host, remover a sala também
