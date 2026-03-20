@@ -148,3 +148,8 @@ wss.on('connection', (ws) => {
         }
     });
 });
+
+// 🔥 CRÍTICO: Fazer o servidor escutar na porta!
+const PORT = process.env.PORT || 3000;
+console.log(`[SERVIDOR] ✅ Cupido Signaling Server rodando na porta ${PORT}`);
+console.log(`[SERVIDOR] ✅ Aguardando conexões WebSocket...`);
