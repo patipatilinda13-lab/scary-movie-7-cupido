@@ -86,10 +86,12 @@ wss.on('connection', (ws) => {
                         id: ws.peerId // Sobrescrevemos com o ID de quem está a enviar agora
                     });
                     
-                    console.log(`[SIGNALING] Enviando ${msg.type} de peer ${ws.peerId} para peer ${targetId}`);
+                    // 👈 CORREÇÃO: Logs detalhados para debugging
+                    const dataSize = msg.data ? msg.data.length : 0;
+                    console.log(`[RELAY] ✅ Retransmitindo ${msg.type} na sala ${msg.room} do peer ${ws.peerId} para ${targetId} (${dataSize} bytes)`);
                     targetWs.send(msgParaEnviar);
                 } else {
-                    console.log(`[ERROR] Peer destino ${targetId} não encontrado!`);
+                    console.log(`[ERROR] ❌ Peer destino ${targetId} não encontrado! Peers disponíveis: ${Array.from(peers.keys()).join(", ")}`);
                 }
             } else {
                 console.log(`[CUPIDO] Mensagem desconhecida: ${msg.type}`);
